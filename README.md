@@ -258,4 +258,4 @@ Function Prototypes
 
 ## Authors :black_nib:
 
-* __Samuyel Kasahun__ <[bdbaraban](https://github.com/samuelkassa)>
+* __Samuyel Kasahun__ <[samuelkassa](https://github.com/samuelkassa)>
