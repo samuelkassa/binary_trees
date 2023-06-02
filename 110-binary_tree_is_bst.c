@@ -1,113 +1,121 @@
 #include "binary_trees.h"
+#include "limits.h"
+int is_bst_helper(const binary_tree_t *tree, int *largest);
+
+#define VERBOSE 0
 
 /**
- * struct node_s - singly linked list
- * @node: const binary tree node
- * @next: points to the next node
+ * binary_tree_is_bst - checks if a binary tree is a valid Binary Search Tree.
+ * @tree: A pointer to the root node of the tree to check.
+ *
+ * Return: 1 if tree is a valid BST, and 0 otherwise
  */
-typedef struct node_s
+int binary_tree_is_bst(const binary_tree_t *tree)
 {
-	const binary_tree_t *node;
-	struct node_s *next;
-} ll;
+	int tracker = INT_MIN;
 
-ll *append(ll *head, const binary_tree_t *btnode);
-void free_list(ll *head);
-ll *get_children(ll *head, const binary_tree_t *parent);
-void levels_rec(ll *head, void (*func)(int));
-
-/**
- * binary_tree_levelorder - Goes through a binary tree
- *                          using level-order traversal.
- * @tree: Pointer to the root node of the tree to traverse.
- * @func: Pointer to a function to call for each node.
- */
-void binary_tree_levelorder(const binary_tree_t *tree, void (*func)(int))
-{
-	ll *children = NULL;
-
-	func(tree->n);
-	children = get_children(children, tree);
-	levels_rec(children, func);
-
-	free_list(children);
+	if (tree == NULL)
+		return (0);
+	return (is_bst_helper(tree, &tracker));
 }
 
-/**
- * levels_rec - Calls func on all nodes at each level.
- * @head: Pointer to head of linked list with nodes at one level.
- * @func: Pointer to a function to call for each node.
- */
-void levels_rec(ll *head, void (*func)(int))
-{
-	ll *children = NULL, *curr = NULL;
 
-	if (!head)
-		return;
-	for (curr = head; curr != NULL; curr = curr->next)
+/**
+ * is_left - checks if a node is a left child of some other node
+ * @node: A pointer to the node to be checked.
+ * Return: 1 if is a left child, otherwise 0
+ */
+int is_left(const binary_tree_t *node)
+{
+	if (node && node->parent)
+		return (node->parent->left == node);
+	return (0);
+}
+/**
+ * is_right - checks if a node is a right child of some other node
+ * @node: A pointer to the node to be checked.
+ * Return: 1 if is a right child, otherwise 0
+ */
+int is_right(const binary_tree_t *node)
+{
+	if (node && node->parent)
+		return (node->parent->right == node);
+	return (0);
+}
+
+#if !VERBOSE
+/**
+ * is_bst_helper - checks if a binary tree is a valid Binary Search Tree.
+ * @tree: A pointer to the root node of the tree to check.
+ * @largest: Value of largest node visited so far.
+ *
+ * Return: 1 if tree is a valid BST, and 0 otherwise
+ */
+int is_bst_helper(const binary_tree_t *tree, int *largest)
+{
+	int ret = 1;
+
+	if (tree != NULL)
 	{
-		func(curr->node->n);
-		children = get_children(children, curr->node);
+		ret *= is_bst_helper(tree->left, largest);
+		if (tree->n < *largest)
+			return (0);
+		*largest = tree->n;
+		if (is_left(tree) && !(tree->n < tree->parent->n))
+			return (0);
+		if (is_right(tree) && !(tree->n > tree->parent->n))
+			return (0);
+		ret *= is_bst_helper(tree->right, largest);
 	}
-	levels_rec(children, func);
-	free_list(children);
+	return (ret);
 }
-
+#else
 /**
- * get_children - appends children of parent to linked list.
- * @head: Pointer to head of linked list where children will be appended.
- * @parent: Pointer to node whose children we want to append.
- * Return: Pointer to head of linked list of children.
+ * is_bst_helper - checks if a binary tree is a valid Binary Search Tree.
+ * @tree: A pointer to the root node of the tree to check.
+ * @largest: Value of largest node visited so far.
+ *
+ * Return: 1 if tree is a valid BST, and 0 otherwise
  */
-ll *get_children(ll *head, const binary_tree_t *parent)
+int is_bst_helper(const binary_tree_t *tree, int *largest)
 {
-	if (parent->left)
-		head = append(head, parent->left);
-	if (parent->right)
-		head = append(head, parent->right);
-	return (head);
-}
+	int ret = 1;
 
-/**
- * append - adds a new node at the end of a linkedlist
- * @head: pointer to head of linked list
- * @btnode: const binary tree node to append
- * Return: pointer to head, or NULL on failure
- */
-ll *append(ll *head, const binary_tree_t *btnode)
-{
-	ll *new = NULL, *last = NULL;
-
-	new = malloc(sizeof(*new));
-	if (new)
+	if (tree)
 	{
-		new->node = btnode;
-		new->next = NULL;
-		if (!head)
-			head = new;
-		else
+		printf("Moving to %d\n", tree->n);
+		ret *= is_bst_helper(tree->left, largest);
+		printf("done with left tree for %d: %d\n", tree->n, ret);
+		printf("largest = %d\n", *largest);
+		if (tree->n < *largest)
+			return (0);
+		*largest = tree->n;
+		printf("largest = %d\n", *largest);
+		if (is_left(tree))
+			printf("%d is %s than %d\n",
+				tree->n,
+				(tree->n < tree->parent->n) ? "smaller" : "larger",
+				tree->parent->n);
+		if (is_left(tree) && !(tree->n < tree->parent->n))
 		{
-			last = head;
-			while (last->next)
-				last = last->next;
-			last->next = new;
+			printf("%d is left child\n", tree->n);
+			return (0);
 		}
+		if (is_right(tree))
+			printf("%d is %s than %d\n",
+				tree->n,
+				(tree->n < tree->parent->n) ? "smaller" : "larger",
+				tree->parent->n);
+		if (is_right(tree) && !(tree->n > tree->parent->n))
+		{
+			printf("%d is right child\n", tree->n);
+			return (0);
+		}
+		ret *= is_bst_helper(tree->right, largest);
+		printf("done with right tree for %d: %d\n", tree->n, ret);
+		if (tree->parent)
+			printf("Moving back to %d\n", tree->parent->n);
 	}
-	return (head);
+	return (ret);
 }
-
-/**
- * free_list - frees all the nodes in a linked list
- * @head: pointer to the head of list_t linked list
- */
-void free_list(ll *head)
-{
-	ll *ptr = NULL;
-
-	while (head)
-	{
-		ptr = head->next;
-		free(head);
-		head = ptr;
-	}
-}
+#endif /* VERBOSE */
